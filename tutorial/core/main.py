@@ -16,11 +16,23 @@ name_list = [
 def root():
     return {"message:": "salam azizam"}
 
-@app.post("/names", status_code=status.HTTP_201_CREATED)
-def create_name(name: str = Body(embed=True)):
-    name_obj = {"id": random.randint(6, 100), "name": name}
+from dataclasses import dataclass
+
+@dataclass
+class Student:
+    name: str
+    age: int
+
+@dataclass
+class StudentResponse:
+    id: int
+    name: str
+
+@app.post("/names", status_code=status.HTTP_201_CREATED, response_model=StudentResponse)
+def create_name(student: Student):
+    name_obj = {"id": random.randint(6, 100), "name": student.name}
     name_list.append(name_obj)
-    return {"result": name_obj}
+    return name_obj
 
 @app.get("/names")
 def show_name_list():
