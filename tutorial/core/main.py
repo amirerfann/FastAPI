@@ -1,8 +1,9 @@
 from fastapi import FastAPI, Query, status, HTTPException, Body
-from typing import Optional, Annotated
+from typing import Optional, Annotated, List
 import uvicorn
 import random
- 
+from .schemas import PersonCreateSchemas, UpdateSchemas, ResponseSchemas, PersonResponseSchemas
+
 app = FastAPI()
 
 name_list = [
@@ -16,46 +17,32 @@ name_list = [
 def root():
     return {"message:": "salam azizam"}
 
-from dataclasses import dataclass
 
-@dataclass
-class Student:
-    name: str
-    age: int
-
-@dataclass
-class StudentResponse:
-    id: int
-    name: str
-
-@app.post("/names", status_code=status.HTTP_201_CREATED, response_model=StudentResponse)
-def create_name(student: Student):
-    name_obj = {"id": random.randint(6, 100), "name": student.name}
+@app.post("/names", status_code=status.HTTP_201_CREATED, response_model=ResponseSchemas)
+def create_name(person: PersonCreateSchemas):
+    name_obj = {"id": random.randint(6, 100), "name": person.name}
     name_list.append(name_obj)
     return name_obj
 
-@app.get("/names")
+@app.get("/names", response_model=List[ResponseSchemas])
 def show_name_list():
     return name_list
 
-@app.get("/names/{name_id}")
-def show_name_id(name_id: int,
-                min_item=1,
-                max_item=5
-                ):
+@app.get("/names/{name_id}", response_model=PersonResponseSchemas)
+def show_name_id(name_id: int):
 
     print(name_id)
     for name in name_list:
         if name["id"] == name_id:
-            return {"User": name}
+            return name
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not Found")    
 
-@app.put("/names/{name_id}")
-def update_name(name_id: int, new_name:str):
+@app.put("/names/{name_id}", response_model=ResponseSchemas)
+def update_name(person: UpdateSchemas):
     for item in name_list:
-        if item["id"] == name_id:
-            item["name"] = new_name
-            return {"message": "succefully changed the name"}, {"User": item}
+        if item["id"] == person.id:
+            item["name"] = person.name
+            return item
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not Found")  
 
 @app.delete("/names/{name_id}")
